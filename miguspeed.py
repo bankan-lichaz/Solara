@@ -98,10 +98,10 @@ def main():
     # 排序（速度从高到低）
     results.sort(key=lambda x: x["speed"], reverse=True)
 
-    # 生成 MGPD.txt（可能有多个 host:port）
+    # 生成 MGPD.txt（只保留速度 > 1 KB/s）
     hosts = []
     for r in results:
-        if r["speed"] > 0:
+        if r["speed"] > 1:  # ⭐⭐⭐ 关键：必须大于 1 KB/s ⭐⭐⭐
             u = urlparse(r["api"])
             hosts.append(f"{u.hostname}:{u.port}")
 
