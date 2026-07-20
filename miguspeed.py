@@ -76,6 +76,10 @@ def main():
         if not name or not api:
             continue
 
+        # ⭐⭐⭐ 测试所有 CCTV1 ⭐⭐⭐
+        if name.upper() != "CCTV1":
+            continue
+
         # 获取跳转地址
         redirect = get_redirect_url(api)
         if not redirect:
@@ -94,7 +98,7 @@ def main():
     # 排序（速度从高到低）
     results.sort(key=lambda x: x["speed"], reverse=True)
 
-    # 生成 MGPD.txt
+    # 生成 MGPD.txt（可能有多个 host:port）
     hosts = []
     for r in results:
         if r["speed"] > 0:
