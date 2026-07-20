@@ -57,7 +57,7 @@ def main():
             continue
 
         # 跳过分组名、注释、#genre#、[Group]、#EXTINF 等
-        if line.startswith("#") or line.startswith("[") or "genre" in line.lower():
+        if line.startswith("#") or line.startswith("[") or "genre" in line.lower() or "miguvideo" in line.lower():
             continue
 
         # 必须包含逗号
