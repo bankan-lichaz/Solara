@@ -42,8 +42,10 @@ def test_speed(url):
 def main():
     results = []
 
-    with open("2.txt", "r") as f:
-        lines = f.read().strip().splitlines()
+    # 读取远程文件
+    url = "https://raw.githubusercontent.com/kakaxi-1/IPTV/refs/heads/main/ipv4.txt"
+    text = requests.get(url).text
+    lines = text.strip().splitlines()
 
     for line in lines:
         name, api = line.split(",", 1)
