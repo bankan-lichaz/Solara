@@ -2,6 +2,7 @@ import requests
 import time
 from urllib.parse import urlparse
 
+# 获取跳转地址（Location）
 def get_redirect_url(api):
     try:
         r = requests.get(api, headers={
@@ -13,6 +14,7 @@ def get_redirect_url(api):
     except:
         return ""
 
+# 拉流测速 5 秒
 def test_speed(url):
     url = url.replace("https://", "http://")
 
@@ -48,12 +50,38 @@ def main():
     lines = text.strip().splitlines()
 
     for line in lines:
-        name, api = line.split(",", 1)
-        redirect = get_redirect_url(api)
+        line = line.strip()
 
+        # 跳过空行
+        if not line:
+            continue
+
+        # 跳过分组名、注释、#genre#、[Group]、#EXTINF 等
+        if line.startswith("#") or line.startswith("[") or "genre" in line.lower():
+            continue
+
+        # 必须包含逗号
+        if "," not in line:
+            continue
+
+        parts = line.split(",", 1)
+
+        # 必须是两个字段
+        if len(parts) != 2:
+            continue
+
+        name, api = parts[0].strip(), parts[1].strip()
+
+        # 跳过空字段
+        if not name or not api:
+            continue
+
+        # 获取跳转地址
+        redirect = get_redirect_url(api)
         if not redirect:
             continue
 
+        # 测速
         speed = test_speed(redirect)
 
         results.append({
@@ -63,7 +91,7 @@ def main():
             "speed": speed
         })
 
-    # 排序
+    # 排序（速度从高到低）
     results.sort(key=lambda x: x["speed"], reverse=True)
 
     # 生成 MGPD.txt
