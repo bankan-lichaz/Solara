@@ -45,7 +45,7 @@ def main():
     results = []
 
     # 读取远程文件
-    url = "https://raw.githubusercontent.com/bankan-lichaz/Ku9-IPTV-source/refs/heads/js/2.txt"
+    url = "https://kakaxi.indevs.in/ipv4.txt"
     text = requests.get(url).text
     lines = text.strip().splitlines()
 
