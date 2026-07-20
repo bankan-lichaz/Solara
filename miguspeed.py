@@ -45,7 +45,7 @@ def main():
     results = []
 
     # 读取远程文件
-    url = "https://raw.githubusercontent.com/bankan-lichaz/Ku9-IPTV-source/refs/heads/js/2.txt"
+    url = "https://raw.githubusercontent.com/kakaxi-1/IPTV/refs/heads/main/ipv4.txt"
     text = requests.get(url).text
     lines = text.strip().splitlines()
 
@@ -98,10 +98,10 @@ def main():
     # 排序（速度从高到低）
     results.sort(key=lambda x: x["speed"], reverse=True)
 
-    # 生成 MGPD.txt（只保留速度 > 1 KB/s）
+    # 生成 MGPD.txt（可能有多个 host:port）
     hosts = []
     for r in results:
-        if r["speed"] > 1:  # ⭐⭐⭐ 关键：必须大于 1 KB/s ⭐⭐⭐
+        if r["speed"] > 0:
             u = urlparse(r["api"])
             hosts.append(f"{u.hostname}:{u.port}")
 
