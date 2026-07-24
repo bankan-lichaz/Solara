@@ -26,6 +26,9 @@ jobs:
       - name: Run Speed Test
         run: python miguspeed.py
 
+      - name: Save MGPD.txt for later use
+        run: cp MGPD.txt /tmp/MGPD.txt
+
       - name: Commit MGPD.txt to main
         run: |
           git config user.name "MGPD Bot"
@@ -39,8 +42,9 @@ jobs:
         with:
           ref: cloudflare/workers-autoconfig
 
-      - name: Copy MGPD.txt to functions folder
-        run: cp MGPD.txt functions/MGPD.txt
+      - name: Copy MGPD.txt into functions folder
+        run: |
+          cp /tmp/MGPD.txt functions/MGPD.txt
 
       - name: Commit MGPD.txt to workers-autoconfig
         run: |
