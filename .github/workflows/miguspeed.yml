@@ -29,5 +29,6 @@ jobs:
           git config user.name "MGPD Bot"
           git config user.email "bot@example.com"
           git add MGPD.txt
+          git add cloudflare/workers-autoconfig/functions/MGPD.txt
           git commit -m "Auto update MGPD"
           git push
