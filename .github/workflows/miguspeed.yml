@@ -3,15 +3,17 @@ name: MGPD Auto Build
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"   # 每 6 小时自动运行
+    - cron: "0 */6 * * *"
 
 jobs:
   build-mgpd:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -24,11 +26,26 @@ jobs:
       - name: Run Speed Test
         run: python miguspeed.py
 
-      - name: Commit MGPD.txt
+      - name: Commit MGPD.txt to main
         run: |
           git config user.name "MGPD Bot"
           git config user.email "bot@example.com"
           git add MGPD.txt
-          git add cloudflare/workers-autoconfig/functions/MGPD.txt
-          git commit -m "Auto update MGPD"
-          git push
+          git commit -m "Auto update MGPD (main)" || echo "No changes"
+          git push origin main
+
+      - name: Checkout workers-autoconfig
+        uses: actions/checkout@v4
+        with:
+          ref: cloudflare/workers-autoconfig
+
+      - name: Copy MGPD.txt to functions folder
+        run: cp MGPD.txt functions/MGPD.txt
+
+      - name: Commit MGPD.txt to workers-autoconfig
+        run: |
+          git config user.name "MGPD Bot"
+          git config user.email "bot@example.com"
+          git add functions/MGPD.txt
+          git commit -m "Auto update MGPD (workers-autoconfig)" || echo "No changes"
+          git push origin cloudflare/workers-autoconfig
