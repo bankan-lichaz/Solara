@@ -22,7 +22,7 @@ jobs:
         run: pip install requests
 
       - name: Run Speed Test
-        run: python miguspeed.py
+        run: python cloudflare/workers-autoconfig/miguspeed.py
 
       - name: Commit MGPD.txt
         run: |
