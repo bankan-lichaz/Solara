@@ -24,7 +24,7 @@ jobs:
         run: pip install requests
 
       - name: Run Speed Test
-        run: python miguspeed.py
+        run: python ms.py
 
       - name: Move MGPD into functions folder
         run: cp MGPD functions/MGPD
