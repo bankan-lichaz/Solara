@@ -14,76 +14,78 @@ except:
 
 results = []
 
-for line in lines:
-    name, api = line.split(",", 1)
+# 通用请求头
+HEADERS = {
+    "Connection": "keep-alive",
+    "User-Agent": "okhttp/5.3.2"
+}
 
-    print(f"正在测试：{name} ({api})")
-
-    # Step 1：获取 redirect_url（不跟随跳转）
+def get_final_url(api):
+    """
+    自动跟随跳转，永远返回最终真实流地址
+    """
     try:
-        resp = requests.get(api, headers={
-            "Connection": "keep-alive",
-            "User-Agent": "okhttp/5.3.2"
-        }, timeout=10, allow_redirects=False)
-
-        redirect = resp.headers.get("Location", "")
+        resp = requests.get(api, headers=HEADERS, timeout=10, allow_redirects=True)
+        return resp.url
     except Exception as e:
-        print(f"  ❌ 请求失败：{e}\n")
-        continue
+        print(f"  ❌ 跳转失败：{e}")
+        return None
 
-    if not redirect:
-        print("  ❌ 无跳转地址，跳过\n")
-        continue
-
-    print(f"  跳转地址：{redirect}")
-
-    # 强制 HTTPS → HTTP
-    real_url = redirect.replace("https:", "http:")
-
-    # Step 2：测速 5 秒
+def test_speed(url):
+    """
+    测速函数：自动处理缓冲、空 chunk、慢启动
+    """
     downloaded = 0
     start_time = time.time()
 
     try:
-        with requests.get(real_url, headers={
-            "Connection": "keep-alive",
-            "User-Agent": "okhttp/5.3.2"
-        }, timeout=10, stream=True) as r:
-
+        with requests.get(url, headers=HEADERS, timeout=10, stream=True) as r:
             for chunk in r.iter_content(chunk_size=4096):
-                if not chunk:
+                if chunk:
+                    downloaded += len(chunk)
+                if time.time() - start_time >= 3:  # 测 3 秒更稳定
                     break
-                downloaded += len(chunk)
-                if time.time() - start_time >= 5:
-                    break
-
     except Exception as e:
-        print(f"  ❌ 拉流失败：{e}\n")
-        continue
+        print(f"  ❌ 拉流失败：{e}")
+        return 0
 
     duration = time.time() - start_time
     speed = round(downloaded / duration / 1024, 2) if duration > 0 else 0
+    return speed
 
+print("================= 开始测速 =================\n")
+
+for line in lines:
+    name, api = line.split(",", 1)
+    print(f"正在测试：{name} ({api})")
+
+    # Step 1：获取最终真实流地址
+    final_url = get_final_url(api)
+    if not final_url:
+        print("  ❌ 无法获取真实流地址\n")
+        continue
+
+    print(f"  最终流地址：{final_url}")
+
+    # Step 2：测速
+    speed = test_speed(final_url)
     print(f"  拉流速度：{speed} KB/s\n")
 
     results.append({
         "name": name,
         "api": api,
-        "redirect": real_url,
+        "redirect": final_url,
         "speed": speed
     })
 
 # Step 3：排序
 results.sort(key=lambda x: x["speed"], reverse=True)
 
-# Step 4：输出最终结果
 print("================= 测速结果（按速度排序） =================\n")
-
 for r in results:
     print(f"{r['name']} | {r['api']} | {r['redirect']} | {r['speed']} KB/s")
 
-# ==================== 生成 MGPD 文件 ====================
-
+# Step 4：生成 MGPD 文件
 mgpd_file = "MGPD"
 valid_hosts = []
 
