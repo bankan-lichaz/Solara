@@ -84,7 +84,7 @@ for r in results:
 
 # ==================== 生成 MGPD 文件 ====================
 
-mgpd_file = "MGPD.txt"
+mgpd_file = "MGPD"
 valid_hosts = []
 
 for r in results:
