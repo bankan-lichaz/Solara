@@ -26,10 +26,10 @@ jobs:
       - name: Run Speed Test
         run: python miguspeed.py
 
-      - name: Move MGPD.txt into functions folder
+      - name: Move MGPD into functions folder
         run: cp MGPD functions/MGPD
 
-      - name: Commit MGPD.txt
+      - name: Commit MGPD
         run: |
           git config user.name "MGPD Bot"
           git config user.email "bot@example.com"
