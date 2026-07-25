@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: cloudflare/workers-autoconfig
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -26,30 +26,10 @@ jobs:
       - name: Run Speed Test
         run: python miguspeed.py
 
-      - name: Save MGPD.txt for later use
-        run: cp MGPD.txt /tmp/MGPD.txt
-
-      - name: Commit MGPD.txt to main
-        run: |
-          git config user.name "MGPD Bot"
-          git config user.email "bot@example.com"
-          git add MGPD.txt
-          git commit -m "Auto update MGPD (main)" || echo "No changes"
-          git push origin main
-
-      - name: Checkout workers-autoconfig
-        uses: actions/checkout@v4
-        with:
-          ref: cloudflare/workers-autoconfig
-
-      - name: Copy MGPD.txt into functions folder
-        run: |
-          cp /tmp/MGPD.txt functions/MGPD.txt
-
-      - name: Commit MGPD.txt to workers-autoconfig
+      - name: Commit MGPD.txt
         run: |
           git config user.name "MGPD Bot"
           git config user.email "bot@example.com"
           git add functions/MGPD.txt
-          git commit -m "Auto update MGPD (workers-autoconfig)" || echo "No changes"
-          git push origin cloudflare/workers-autoconfig
+          git commit -m "Auto update MGPD"
+          git push
