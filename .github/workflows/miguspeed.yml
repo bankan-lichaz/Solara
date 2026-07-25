@@ -27,12 +27,12 @@ jobs:
         run: python miguspeed.py
 
       - name: Move MGPD.txt into functions folder
-        run: cp MGPD.txt functions/MGPD.txt
+        run: cp MGPD functions/MGPD
 
       - name: Commit MGPD.txt
         run: |
           git config user.name "MGPD Bot"
           git config user.email "bot@example.com"
-          git add functions/MGPD.txt
+          git add functions/MGPD
           git commit -m "Auto update MGPD"
           git push
