@@ -71,11 +71,15 @@ for r in results:
     if host and port:
         valid_hosts.append(f"{host}:{port}")
 
-line = "5," + ",".join(valid_hosts)
+# ⭐ 关键修改：如果没有有效 host:port，则写入空文件
+if valid_hosts:
+    line = "5," + ",".join(valid_hosts)
+else:
+    line = ""  # 完全空白
 
 with open(mgpd_file, "w", encoding="utf-8") as f:
     f.write(line)
 
 print(f"\nMGPD 文件已生成：{mgpd_file}")
 print("内容：")
-print(line)
+print(line if line else "（空文件）")
