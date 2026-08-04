@@ -42,7 +42,15 @@ for line in lines:
         print("  ❌ 无法获取真实流地址\n")
         continue
 
-    print(f"  最终流地址：{final_url}\n")
+    print(f"  最终流地址：{final_url}")
+
+    # Step 2：过滤：最终流地址等于测试流地址的不要写入 MGPD
+    if final_url == api:
+        print("  ⚠ final_url 与 api 相同，跳过写入 MGPD\n")
+        print()
+        continue
+
+    print("  ✔ 已加入 MGPD\n")
 
     results.append({
         "name": name,
@@ -50,7 +58,9 @@ for line in lines:
         "redirect": final_url
     })
 
-# Step 2：生成 MGPD 文件
+    print()
+
+# Step 3：生成 MGPD 文件
 mgpd_file = "MGPD"
 valid_hosts = []
 
