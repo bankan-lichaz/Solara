@@ -1,6 +1,7 @@
 import requests
 from urllib.parse import urlparse
 import re
+import time
 
 print("Content-Type: text/plain; charset=utf-8")
 
@@ -21,29 +22,36 @@ HEADERS = {
 
 def get_final_url(api):
     """
-    自动跟随跳转，如果跳转失败，则从异常信息中提取 host + port + path 拼接真实流地址
+    优先真实跳转，失败自动重试 5 次。
+    如果仍失败，再使用 host+port+path 拼接作为兜底。
     """
-    try:
-        resp = requests.get(api, headers=HEADERS, timeout=10, allow_redirects=True)
-        return resp.url
 
-    except Exception as e:
-        msg = str(e)
+    # ⭐ 第 1 步：最多重试 5 次真实跳转
+    for i in range(5):
+        try:
+            resp = requests.get(api, headers=HEADERS, timeout=10, allow_redirects=True)
+            return resp.url  # 成功跳转，直接返回真实流
+        except Exception as e:
+            print(f"  ⚠ 第 {i+1} 次跳转失败：{e}")
+            time.sleep(0.5)
 
-        host_match = re.search(r"host='([^']+)'", msg)
-        port_match = re.search(r"port=(\d+)", msg)
-        url_match = re.search(r"url: ([^\s]+)", msg)
+    # ⭐ 第 2 步：5 次都失败 → 尝试从异常中提取 host+port+path 拼接
+    msg = str(e)
 
-        if host_match and port_match and url_match:
-            host = host_match.group(1)
-            port = port_match.group(1)
-            path = url_match.group(1)
-            final_url = f"http://{host}:{port}{path}"
-            print(f"  ⚠ 跳转失败，但已提取真实流地址：{final_url}")
-            return final_url
+    host_match = re.search(r"host='([^']+)'", msg)
+    port_match = re.search(r"port=(\d+)", msg)
+    url_match = re.search(r"url: ([^\s]+)", msg)
 
-        print(f"  ❌ 跳转失败且无法提取真实流地址：{e}")
-        return None
+    if host_match and port_match and url_match:
+        host = host_match.group(1)
+        port = port_match.group(1)
+        path = url_match.group(1)
+        final_url = f"http://{host}:{port}{path}"
+        print(f"  ⚠ 已使用兜底拼接真实流地址：{final_url}")
+        return final_url
+
+    print("  ❌ 无法获取真实流地址（跳转失败 + 拼接失败）")
+    return None
 
 
 print("================= 开始处理 =================\n")
@@ -54,20 +62,18 @@ for line in lines:
 
     final_url = get_final_url(api)
     if not final_url:
-        print("  ❌ 无法获取真实流地址\n")
+        print("  ❌ 跳过：无法获取真实流地址\n")
         continue
 
-    print(f"  最终流地址：{final_url}")
+    print(f"  ✔ 最终流地址：{final_url}\n")
 
     results.append({
         "name": name,
         "final": final_url
     })
 
-    print()
 
-
-# ⭐ 生成 MGZS 文件：name, final_url
+# ⭐ 生成 MGZS 文件：name,final_url
 mgzs_file = "MGZS"
 
 with open(mgzs_file, "w", encoding="utf-8") as f:
