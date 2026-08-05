@@ -34,7 +34,7 @@ jobs:
           git config user.name "MGZS Bot"
           git config user.email "bot@example.com"
           if git diff --quiet functions/MGZS; then
-            echo "No changes in MGPD"
+            echo "No changes in MGZS"
           else
             git add functions/MGZS
             git commit -m "Auto update MGZS"
