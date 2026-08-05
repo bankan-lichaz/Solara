@@ -1,0 +1,42 @@
+name: MGZS Auto Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  build-mgpd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: cloudflare/workers-autoconfig
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Run Speed Test
+        run: python mgzs.py
+
+      - name: Move MGZS into functions folder
+        run: cp MGZS functions/MGZS
+
+      - name: Commit MGZS
+        run: |
+          git config user.name "MGZS Bot"
+          git config user.email "bot@example.com"
+          if git diff --quiet functions/MGZS; then
+            echo "No changes in MGPD"
+          else
+            git add functions/MGZS
+            git commit -m "Auto update MGZS"
+            git push
+          fi
