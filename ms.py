@@ -1,8 +1,6 @@
 import requests
 from urllib.parse import urlparse
-import time
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 print("Content-Type: text/plain; charset=utf-8")
 
@@ -53,29 +51,6 @@ def get_final_url(api):
         return None
 
 
-def test_stream_speed(url, duration=5):
-    """
-    拉流测速：持续 duration 秒，统计收到的字节数
-    返回字节数（>0 表示有效）
-    """
-    try:
-        resp = requests.get(url, headers=HEADERS, stream=True, timeout=5)
-        start = time.time()
-        total_bytes = 0
-
-        for chunk in resp.iter_content(chunk_size=4096):
-            if chunk:
-                total_bytes += len(chunk)
-            if time.time() - start >= duration:
-                break
-
-        return total_bytes
-
-    except Exception as e:
-        print(f"  ❌ 拉流失败：{e}")
-        return 0
-
-
 print("================= 开始处理 =================\n")
 
 for line in lines:
@@ -89,12 +64,12 @@ for line in lines:
 
     print(f"  最终流地址：{final_url}")
 
+    # final_url 与 api 相同 → 不写入 MGPD
     if final_url == api:
-        print("  ⚠ final_url 与 api 相同，跳过测速\n")
-        print()
+        print("  ⚠ final_url 与 api 相同，跳过写入 MGPD\n")
         continue
 
-    print("  ✔ 已加入测速队列\n")
+    print("  ✔ 已加入 MGPD\n")
 
     results.append({
         "name": name,
@@ -105,51 +80,22 @@ for line in lines:
     print()
 
 
-# Step 3：多线程测速
-print("开始多线程测速...\n")
-
-speed_results = []
-
-with ThreadPoolExecutor(max_workers=20) as executor:
-    futures = {
-        executor.submit(test_stream_speed, r["redirect"], 5): r
-        for r in results
-    }
-
-    for future in as_completed(futures):
-        r = futures[future]
-        final_url = r["redirect"]
-        api = r["api"]
-
-        speed = future.result()
-        print(f"测速完成：{final_url} → {speed} bytes")
-
-        if speed > 0:
-            url = urlparse(api)
-            host = url.hostname
-            port = url.port
-            if host and port:
-                speed_results.append({
-                    "hostport": f"{host}:{port}",
-                    "speed": speed
-                })
-                print("  ✔ 速度有效，加入 MGPD")
-        else:
-            print("  ❌ 速度为 0，跳过")
-
-        print()
-
-
-# Step 4：按速度排序（从快到慢）
-speed_results.sort(key=lambda x: x["speed"], reverse=True)
-
-# Step 5：生成 MGPD 文件
+# Step 3：生成 MGPD 文件（无测速，无排序）
 mgpd_file = "MGPD"
+valid_hosts = []
 
-if speed_results:
-    line = "5," + ",".join([item["hostport"] for item in speed_results])
+for r in results:
+    url = urlparse(r["api"])
+    host = url.hostname
+    port = url.port
+    if host and port:
+        valid_hosts.append(f"{host}:{port}")
+
+# ⭐ 如果没有有效 host:port → 文件完全空白
+if valid_hosts:
+    line = "5," + ",".join(valid_hosts)
 else:
-    line = ""  # 空文件
+    line = ""
 
 with open(mgpd_file, "w", encoding="utf-8") as f:
     f.write(line)
