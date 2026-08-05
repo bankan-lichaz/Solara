@@ -1,6 +1,7 @@
 import requests
 from urllib.parse import urlparse
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 print("Content-Type: text/plain; charset=utf-8")
 
@@ -68,7 +69,7 @@ for line in lines:
         print()
         continue
 
-    print("  ✔ 已加入 MGPD\n")
+    print("  ✔ 已加入测速队列\n")
 
     results.append({
         "name": name,
@@ -78,35 +79,50 @@ for line in lines:
 
     print()
 
-# Step 3：生成 MGPD 文件
+# Step 3：多线程测速
+print("开始多线程测速...\n")
+
+speed_results = []
+
+with ThreadPoolExecutor(max_workers=20) as executor:
+    futures = {
+        executor.submit(test_stream_speed, r["redirect"], 5): r
+        for r in results
+    }
+
+    for future in as_completed(futures):
+        r = futures[future]
+        final_url = r["redirect"]
+        api = r["api"]
+
+        speed = future.result()
+        print(f"测速完成：{final_url} → {speed} bytes")
+
+        if speed > 0:
+            url = urlparse(api)
+            host = url.hostname
+            port = url.port
+            if host and port:
+                speed_results.append({
+                    "hostport": f"{host}:{port}",
+                    "speed": speed
+                })
+                print("  ✔ 速度有效，加入 MGPD")
+        else:
+            print("  ❌ 速度为 0，跳过")
+
+        print()
+
+# Step 4：按速度排序（从快到慢）
+speed_results.sort(key=lambda x: x["speed"], reverse=True)
+
+# Step 5：生成 MGPD 文件
 mgpd_file = "MGPD"
-valid_hosts = []
 
-for r in results:
-    final_url = r["redirect"]
-
-    print(f"测速：{final_url}")
-    speed = test_stream_speed(final_url, duration=5)
-
-    print(f"  拉流字节数：{speed}")
-
-    if speed > 0:
-        url = urlparse(r["api"])
-        host = url.hostname
-        port = url.port
-        if host and port:
-            valid_hosts.append(f"{host}:{port}")
-            print("  ✔ 速度有效，写入 MGPD")
-    else:
-        print("  ❌ 速度为 0，跳过")
-
-    print()
-
-# ⭐ 如果没有有效 host:port → 文件完全空白
-if valid_hosts:
-    line = "5," + ",".join(valid_hosts)
+if speed_results:
+    line = "5," + ",".join([item["hostport"] for item in speed_results])
 else:
-    line = ""
+    line = ""  # 空文件
 
 with open(mgpd_file, "w", encoding="utf-8") as f:
     f.write(line)
